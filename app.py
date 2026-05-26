@@ -1,3 +1,3 @@
-imaport streamlit as st
+import streamlit as st
 st.title('운빨겜')
-st.write(welcome)
+st.write('welcome')
