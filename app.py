@@ -1,7 +1,7 @@
 import streamlit as st
 st.title('운빨겜')
 st.write('welcome')
-st.write('from openai import OpenAI
+st.write('from openai import OpenAI')
 from dotenv import load_dotenv
 
 # 1. 환경 변수 로드 (.env 파일에서 API 키를 읽어옴)
@@ -72,4 +72,4 @@ if user_input := st.chat_input("무엇이든 물어보세요..."):
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"백엔드 통신 중 에러가 발생했습니다: {str(e)}")')
+            st.error(f"백엔드 통신 중 에러가 발생했습니다: {str(e)}")
