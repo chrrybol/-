@@ -1,75 +1,81 @@
 import streamlit as st
-st.title('운빨겜')
-st.write('welcome')
-st.write('from openai import OpenAI')
-from dotenv import load_dotenv
+from google import genai
+from google.genai.errors import APIError
 
-# 1. 환경 변수 로드 (.env 파일에서 API 키를 읽어옴)
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
+# 페이지 기본 설정
+st.set_page_config(
+    page_title="달콤살벌 연애상담소 💬",
+    page_icon="❤️",
+    layout="centered"
+)
 
-if not api_key:
-    st.error("🚨 환경 변수 오류: .env 파일에 'OPENAI_API_KEY'가 설정되지 않았습니다.")
+# 제목 및 설명
+st.title("❤️ 달콤살벌 연애상담소")
+st.caption("Gemini 2.5 Flash-Lite 기반의 인공지능 연애 상담사입니다. 당신의 연애 고민을 들어드릴게요!")
+
+# Streamlit Secrets에서 API 키 불러오기
+if "GEMINI_API_KEY" not in st.secrets:
+    st.error("🔑 API 키가 설정되지 않았습니다. Streamlit 대시보드의 Secrets에 'GEMINI_API_KEY'를 등록해주세요.")
     st.stop()
 
-# 2. OpenAI 클라이언트 백엔드 초기화
-client = OpenAI(api_key=api_key)
+# 구글 GenAI 클라이언트 초기화
+try:
+    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+except Exception as e:
+    st.error(f"클라이언트 초기화 중 오류가 발생했습니다: {e}")
+    st.stop()
 
-# 3. 웹 앱 UI 및 페이지 설정
-st.set_page_config(page_title="Pro AI Chatbot", page_icon="🧠", layout="centered")
-st.title("🧠 프로페셔널 AI 챗봇")
-st.caption("🚀 스트리밍 기능과 안전한 백엔드 아키텍처가 적용된 완성본 웹앱입니다.")
-
-# 4. [백엔드 데이터베이스 역할] 세션 상태 초기화
-# 대화 내역(messages) 저장 공간 생성
+# 세션 상태(Session State)를 활용한 채팅 기록 유지 설정
 if "messages" not in st.session_state:
     st.session_state.messages = []
+    # 상담사 콘셉트를 부여하기 위한 첫 환영 인사 추가
+    st.session_state.messages.append({
+        "role": "model",
+        "content": "안녕하세요! 당신의 연애 고민 해결을 도와드릴 연애 상담사입니다. 어떤 고민이 있으신가요? 사소한 이야기라도 편하게 들려주세요. 💕"
+    })
 
-# AI의 페르소나를 결정하는 시스템 프롬프트 (기본값 설정)
-SYSTEM_PROMPT = {"role": "system", "content": "당신은 전문적이고 친절한 AI 조언자입니다. 항상 정확하고 정중하게 답변하세요."}
-
-# 5. [데이터 렌더링] 기존 대화 기록을 화면에 출력
+# 기존 채팅 기록 화면에 표시
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        st.write(message["content"])
 
-# 6. [사용자 입력 처리 및 API 호출 백엔드 로직]
-if user_input := st.chat_input("무엇이든 물어보세요..."):
-    
-    # 유저 입력 즉시 화면 표시 및 메모리 저장
+# 사용자 입력 처리
+if user_input := st.chat_input("고민을 입력하세요... (예: 썸녀가 선톡을 안 해요)"):
+    # 1. 사용자 메시지 화면에 표시 및 세션 저장
     with st.chat_message("user"):
-        st.markdown(user_input)
+        st.write(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
-    
-    # AI 답변을 출력할 공간을 미리 만들기
-    with st.chat_message("assistant"):
-        response_placeholder = st.empty()  # 스트리밍 텍스트가 채워질 빈 공간
-        full_response = ""
-        
-        try:
-            # API 전송용 메시지 조립: [시스템 프롬프트] + [이전 대화 기록 전체]
-            api_messages = [SYSTEM_PROMPT] + st.session_state.messages
-            
-            # [핵심 백엔드] OpenAI API 스트리밍 요청
-            # stream=True 옵션을 주면 데이터가 완성될 때까지 기다리지 않고 조각조각 계속 들어옵니다.
-            stream = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=api_messages,
-                stream=True,
-            )
-            
-            # 스트리밍 데이터 실시간 수신 및 프론트엔드 전달
-            for chunk in stream:
-                if chunk.choices[0].delta.content is not None:
-                    full_response += chunk.choices[0].delta.content
-                    # 실시간으로 빈 공간에 텍스트를 누적하여 업데이트 (타이핑 효과)
-                    response_placeholder.markdown(full_response + "▌")
-            
-            # 커서(▌)를 지우고 최종 텍스트로 확정 표시
-            response_placeholder.markdown(full_response)
-            
-            # [백엔드 저장] 완성된 AI 답변을 대화 기록에 최종 누적
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-        except Exception as e:
-            st.error(f"백엔드 통신 중 에러가 발생했습니다: {str(e)}")
+
+    # 2. 챗봇 답변 생성 및 화면 표시
+    with st.chat_message("model"):
+        with st.spinner("당신의 고민에 귀 기울이는 중..."):
+            try:
+                # 연애 상담사 콘셉트를 유지하기 위한 시스템 지침(System Instruction) 설정
+                system_instruction = (
+                    "당신은 전문적이고 공감 능력이 뛰어난 연애 상담사입니다. "
+                    "사용자의 고민에 진심으로 공감해주고, 때로는 현실적이고 실용적인 조언을 제공해야 합니다. "
+                    "친근하고 다정한 말투를 사용하되, 선을 넘지 않는 선에서 위트 있게 답변하세요."
+                )
+
+                # 대화 맥락(History)을 엮어서 보낼 수도 있으나, 
+                # 여기서는 API 호출 안정성과 단발성 대화 규칙에 맞추어 최신 입력에 시스템 지침을 결합해 전달합니다.
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash-lite',
+                    contents=user_input,
+                    config={
+                        "system_instruction": system_instruction,
+                        "temperature": 0.7,
+                    }
+                )
+                
+                # 답변 출력 및 세션 저장
+                ai_response = response.text
+                st.write(ai_response)
+                st.session_state.messages.append({"role": "model", "content": ai_response})
+
+            except APIError as e:
+                # Gemini API 자체 오류 처리 (할당량 초과, 잘못된 키 등)
+                st.error(f"❌ Gemini API 오류가 발생했습니다: {e.message}")
+            except Exception as e:
+                # 기타 일반 예외 처리
+                st.error(f"⚠️ 에러가 발생했습니다: {e}")
