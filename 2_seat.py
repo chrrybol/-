@@ -1,1 +1,3 @@
-[GitHub](https://github.com?utm_source=chatgpt.com)
+
+requirements.txt
+README.md
