@@ -1,4 +1,4 @@
-iimport streamlit as st
+import streamlit as st
 import google.generativeai as genai
 
 # 1. 페이지 초기 설정
