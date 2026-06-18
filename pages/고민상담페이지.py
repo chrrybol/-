@@ -1,7 +1,7 @@
 import streamlit as st
 
 def apply_cute_theme():
-    """앱 전체를 귀여운 나뭇잎과 곰돌이 컨셉으로 꾸며주는 CSS 함수 (오류 유발 요소 제거)"""
+    """앱 전체를 귀여운 나뭇잎과 곰돌이 컨셉으로 꾸며주는 CSS 함수"""
     st.markdown("""
         <style>
         .stApp { background-color: #f6f9f5; }
@@ -13,7 +13,6 @@ def apply_cute_theme():
             background-color: #e8f3e6 !important; border-radius: 18px; border: 1px solid #cedec9; padding: 12px;
         }
         div[data-testid="stChatInput"] { border-radius: 25px; }
-        /* 흰 화면 버그를 만드는 header 숨김 처리를 안전하게 제거했습니다 */
         </style>
     """, unsafe_allow_html=True)
 
@@ -65,4 +64,4 @@ def run_counseling_page(genai):
                 st.session_state.counsel_messages.append({"role": "assistant", "content": full_response})
                 
             except Exception as e:
-                placeholder.markdown("🧸 토닥토닥... 곰돌이가 네 말을 귀담아듣다가 꿀 생각에 잠시 멍해졌나 봐. 다시 말해줄래? ❤️")
+                placeholder.markdown("🧸 토닥토닥... 곰돌이가 네 말을 귀담아듣다가 꿀 생각에 잠깐 멍해졌나 봐. 다시 말해줄래? ❤️")
